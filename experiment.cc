@@ -87,10 +87,6 @@ TGraphErrors* experiment::newGraphErrors(string id, const char* file ){
       return g;
 }
 
-TObject* experiment::get(string id){
-      return objects.find(id)->second;
-}
-
 void  experiment::addH1(string id, TH1F* h){
       objects[id]= h;
       h1map[id]=h;
@@ -112,5 +108,51 @@ void  experiment::addErrorsGraph(string id, TGraphErrors* g){
 }
 
 void  experiment::addDescription(string id, string desc){
-      descr[id]= desc;
+      descr[id]=desc;
+}
+
+//metodi di ricerca.
+TObject* experiment::get(string id){
+      map<string,TObject*>::iterator it = objects.find(id);
+      if(it != map::end){
+            return it->second;
+      }else{
+            return NULL;
+      }
+}
+
+TH1F* experiment::getH1(string id){
+      map<string,TH1F*>::iterator it = h1map.find(id);
+      if(it != map::end){
+            return it->second;
+      }else{
+            return NULL;
+      }
+}
+
+TH2F* experiment::getH2(string id){
+      map<string,TH2F*>::iterator it = h2map.find(id);
+      if(it != map::end){
+            return it->second;
+      }else{
+            return NULL;
+      }
+}
+
+TGraph* experiment::getGraph(string id){
+      map<string,TGraph*>::iterator it = graphmap.find(id);
+      if(it != map::end){
+            return it->second;
+      }else{
+            return NULL;
+      }
+}
+
+TGraphErrors* experiment::get(string id){
+      map<string,TGraphErrors*>::iterator it = grap_errormap.find(id);
+      if(it != map::end){
+            return it->second;
+      }else{
+            return NULL;
+      }
 }
