@@ -1,5 +1,5 @@
 #include "experiment.h"
-
+#include <iostream>
 using namespace std;
 
 experiment::experiment(string name):  exp_name(name){}
@@ -37,6 +37,7 @@ experiment& experiment::operator= (const experiment&){
       ntuples= e.ntuples;
 }
 
+//metodi per creare nuovi dati
 TH1F* experiment::newH1(string id, int nbins, double min, double max){
       TH1F* h = new TH1F(id,id,nbins,min,max);
       objecs[id] = h;
@@ -87,6 +88,7 @@ TGraphErrors* experiment::newGraphErrors(string id, const char* file ){
       return g;
 }
 
+//metodi per aggiungere dati
 void  experiment::addH1(string id, TH1F* h){
       objects[id]= h;
       h1map[id]=h;
@@ -114,7 +116,7 @@ void  experiment::addDescription(string id, string desc){
 //metodi di ricerca.
 TObject* experiment::get(string id){
       map<string,TObject*>::iterator it = objects.find(id);
-      if(it != map::end){
+      if(it != map::end()){
             return it->second;
       }else{
             return NULL;
@@ -123,7 +125,7 @@ TObject* experiment::get(string id){
 
 TH1F* experiment::getH1(string id){
       map<string,TH1F*>::iterator it = h1map.find(id);
-      if(it != map::end){
+      if(it != map::end()){
             return it->second;
       }else{
             return NULL;
@@ -132,7 +134,7 @@ TH1F* experiment::getH1(string id){
 
 TH2F* experiment::getH2(string id){
       map<string,TH2F*>::iterator it = h2map.find(id);
-      if(it != map::end){
+      if(it != map::end()){
             return it->second;
       }else{
             return NULL;
@@ -141,7 +143,7 @@ TH2F* experiment::getH2(string id){
 
 TGraph* experiment::getGraph(string id){
       map<string,TGraph*>::iterator it = graphmap.find(id);
-      if(it != map::end){
+      if(it != map::end()){
             return it->second;
       }else{
             return NULL;
@@ -150,9 +152,37 @@ TGraph* experiment::getGraph(string id){
 
 TGraphErrors* experiment::get(string id){
       map<string,TGraphErrors*>::iterator it = grap_errormap.find(id);
-      if(it != map::end){
+      if(it != map::end()){
             return it->second;
       }else{
             return NULL;
+      }
+}
+
+//metodi informativi
+void experiment::listObjects(){
+      cout << "TH1F:\n ";
+      map<string,TH1F* >::iterator it = h1map.begin();
+      while(it != map::end()){
+            cout <<"\t"<< it->first << " : " descr[it->first]<<endl;
+            it++;
+      }
+      cout << "TH2F:\n ";
+      map<string,TH2F* >::iterator it2 = h2map.begin();
+      while(it2 != map::end()){
+            cout << it2->first << " : " descr[it2->first]<<endl;
+            it2++;
+      }
+      cout << "TGraph:\n ";
+      map<string,TGraph* >::iterator it3 = graphmap.begin();
+      while(it3 != map::end()){
+            cout << it3->first << " : " descr[it3->first]<<endl;
+            it3++;
+      }
+      cout << "TGraphErrors:\n ";
+      map<string,TGraphErrors* >::iterator it4 = graph_errormap.begin();
+      while(it4 != map::end()){
+            cout << it4->first << " : " descr[it4->first]<<endl;
+            it4++;
       }
 }
