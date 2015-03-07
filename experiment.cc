@@ -90,3 +90,27 @@ TGraphErrors* experiment::newGraphErrors(string id, const char* file ){
 TObject* experiment::get(string id){
       return objects.find(id)->second;
 }
+
+void  experiment::addH1(string id, TH1F* h){
+      objects[id]= h;
+      h1map[id]=h;
+}
+
+void  experiment::addH2(string id, TH2F* h){
+      objects[id]= h;
+      h2map[id]=h;
+}
+
+void  experiment::addGraph(string id, TGraph* g){
+      objects[id]= g;
+      graphmap[id]=g;
+}
+
+void  experiment::addErrorsGraph(string id, TGraphErrors* g){
+      objects[id]=g;
+      grap_errormap[id]=g;
+}
+
+void  experiment::addDescription(string id, string desc){
+      descr[id]= desc;
+}
