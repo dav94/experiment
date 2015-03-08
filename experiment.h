@@ -7,6 +7,7 @@
 #include "TGraphErrors.h"
 #include "TNtuple.h"
 #include "TObject.h"
+#include "TFile.h"
 #include <map>
 #include <string>
 
@@ -34,12 +35,14 @@ public:
       TGraph* newGraph(string id,const char* file );
       TGraphErrors* newGraphErrors(string id, int n, double* x, double* y,double* ex,double* ey);
       TGraphErrors* newGraphErrors(string id,const char* file );
+      TNtuple* newNtuple(string id, int nvar );
 
       //aggiunta oggetti
       void addH1(string id, TH1F* h);
       void addH2(string id, TH2F* h);
       void addGraph(string id, TGraph* g);
-      void addErrorsGraph(string id, TGraphErrors* g);
+      void addGraphErrors(string id, TGraphErrors* g);
+      void addNtuple(string id, TNtuple* nt);
       void addDescription(string id, string desc);
 
       //metodo get generico
@@ -48,6 +51,7 @@ public:
       TH1F* getH1(string id);
       TH2F* getH2(string id);
       TGraph* getGraph(string id);
+      TGraphErrors* getGraphErrors(string id);
       TNtuple* getNtuple(string id);
 
       //metodi informativi
@@ -56,7 +60,6 @@ public:
 
       //salvataggio e caricamento
       void saveData();
-      void saveData(string path);
       static experiment&  loadExperiment(string path);
 
 private:
@@ -70,7 +73,8 @@ private:
       std::map<string, TH2F*> h2map;
       std::map<string,TGraph*> graphmap;
       std::map<string,TGraphErrors*> graph_errormap;
-      std::map<string,TNtuple*> ntuples;
+      //usiamo ntuple da 1 a 3 variabili
+      std::map<string,TNtuple*> ntuples_map;
 };
 
 
