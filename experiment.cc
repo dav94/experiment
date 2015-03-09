@@ -1,6 +1,7 @@
 #include "experiment.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 using namespace std;
 
 experiment::experiment(string name):  exp_name(name){}
@@ -13,6 +14,7 @@ experiment::~experiment(){
       graphmap.clear();
       graph_errormap.clear();
       ntuples_map.clear();
+      canvas_map.clear();
       objects.clear();
 }
 
@@ -25,6 +27,7 @@ experiment::experiment(const experiment& e){
       graphmap = e.graphmap;
       graph_errormap = e.graph_errormap;
       ntuples_map= e.ntuples_map;
+      canvas_map= e.canvas_map;
 }
 
 experiment& experiment::operator= (const experiment& e){
@@ -36,6 +39,7 @@ experiment& experiment::operator= (const experiment& e){
       graphmap = e.graphmap;
       graph_errormap = e.graph_errormap;
       ntuples_map= e.ntuples_map;
+      canvas_map= e.canvas_map;
 }
 
 //metodi per creare nuovi dati
@@ -112,6 +116,13 @@ TNtuple* experiment::newNtuple(string id, int var){
       return n;
 }
 
+TCanvas* experiment::newCanvas(string id, string title){
+      TCanvas* c = new TCanvas(id.c_str(),title.c_str());
+      canvas_map[id]=c;
+      objects[id]=c;
+      return c;
+}
+
 //metodi per aggiungere dati
 void  experiment::addH1(string id, TH1F* h){
       objects[id]= h;
@@ -136,6 +147,11 @@ void  experiment::addGraphErrors(string id, TGraphErrors* g){
 void experiment::addNtuple(string id, TNtuple* nt){
       objects[id]= nt;
       ntuples_map[id]=nt;
+}
+
+void experiment::addCanvas(string id, TCanvas* c){
+      objects[id]= c;
+      canvas_map[id]= c;
 }
 
 void  experiment::addDescription(string id, string desc){
@@ -197,6 +213,15 @@ TNtuple* experiment::getNtuple(string id){
       }
 }
 
+TCanvas* experiment::getCanvas(string id){
+      map<string,TCanvas*>::iterator it = canvas_map.find(id);
+      if(it!= canvas_map.end()){
+            return it->second;
+      }else{
+            return NULL;
+      }
+}
+
 //metodi informativi
 void experiment::listObjects(){
       cout << "TH1F:\n ";
@@ -223,6 +248,18 @@ void experiment::listObjects(){
             cout << it4->first << " : " <<descr[it4->first]<<endl;
             it4++;
       }
+      cout << "TNtuple:\n ";
+      map<string,TNtuple* >::iterator it5 = ntuples_map.begin();
+      while(it5 != ntuples_map.end()){
+            cout << it5->first << " : " <<descr[it5->first]<<endl;
+            it5++;
+      }
+      cout << "TCanvas:\n ";
+      map<string,TCanvas* >::iterator it6 = canvas_map.begin();
+      while(it6 != canvas_map.end()){
+            cout << it6->first << " : " <<descr[it6->first]<<endl;
+            it6++;
+      }
 }
 
 string experiment::getObjectDescription(string id){
@@ -232,7 +269,7 @@ string experiment::getObjectDescription(string id){
 
 //salvataggio dati
 void experiment::saveData(){
-      TFile* file = new TFile( exp_name.c_str(), "UPDATE");
+      TFile file ( (exp_name+".root").c_str(), "UPDATE");
       map<string, TObject*>::iterator it = objects.begin();
       while(it != objects.end()){
             it->second->Write();
@@ -242,35 +279,84 @@ void experiment::saveData(){
       //ora si salvano i nomi su un file di informazioni
       ofstream out (exp_name+".info",ios::out);
       //per ogni tipo di file inseriamo nome e descrizione
-      out<< "#TH1F"<<endl;
       map<string,TH1F*>::iterator ith1 = h1map.begin();
       while(ith1 != h1map.end()){
-            out << ith1->first << "   " << descr[ith1->first]<<endl;
+            out << "TH1F   " << ith1->first << "   " << descr[ith1->first]<<endl;
             ith1++;
       }
-      out<< "#TH2F"<<endl;
       map<string,TH2F*>::iterator ith2 = h2map.begin();
       while(ith2 != h2map.end()){
-            out << ith2->first << "   " << descr[ith2->first]<<endl;
+            out <<"TH2F   "<< ith2->first << "   " << descr[ith2->first]<<endl;
             ith2++;
       }
-      out<< "#TGraph"<<endl;
       map<string,TGraph*>::iterator itg = graphmap.begin();
       while(itg != graphmap.end()){
-            out << itg->first << "   " << descr[itg->first]<<endl;
+            out << "TGraph   "<<itg->first << "   " << descr[itg->first]<<endl;
             itg++;
       }
-      out<< "#TGraphErrors"<<endl;
       map<string,TGraphErrors*>::iterator itge = graph_errormap.begin();
       while(itge != graph_errormap.end()){
-            out << itge->first << "   " << descr[itge->first]<<endl;
+            out <<"TGraphErrors   "<< itge->first << "   " << descr[itge->first]<<endl;
             itge++;
       }
-      out<< "#TNtuple"<<endl;
       map<string,TNtuple*>::iterator itn = ntuples_map.begin();
       while(itn != ntuples_map.end()){
-            out << itn->first << "   " << descr[itn->first]<<endl;
+            out <<"Tntuple   "<<itn->first << "   " << descr[itn->first]<<endl;
             itn++;
       }
+      map<string,TCanvas*>::iterator itc = canvas_map.begin();
+      while(itc != canvas_map.end()){
+            out <<"TCanvas   "<<itc->first << "   " << descr[itc->first]<<endl;
+            itc++;
+      }
       out.close();
+}
+
+//caricamento esperimento
+experiment* experiment::loadExperiment(string name){
+      experiment* e = new experiment(name);
+      //prima di tutto si legge il file di info
+      ifstream in (name, ios::in);
+      TFile file ((name+".root").c_str(), "READ" );
+      stringstream ss;
+      if(in.good()){
+            string line;
+            getline(in,line);
+            ss<<line;
+            //si legge la prima parola
+            string f,id,desc;
+            ss>>f >> id>>desc;
+            //aggiungo descrizione
+            e->descr[id]=desc;
+
+            if(f == "TH1F" ){
+                  TH1F* h1 = (TH1F*) file.GetObjectChecked(id.c_str(),"TH1F");
+                  e->h1map[id]=h1;
+                  e->objects[id]=h1;
+            }else if(f == "TH2F"){
+                  TH2F* h2 = (TH2F*) file.GetObjectChecked(id.c_str(),"TH2F");
+                  e->h2map[id]=h2;
+                  e->objects[id]=h2;
+            }else if (f == "TGraph"){
+                  TGraph* g = (TGraph*) file.GetObjectChecked(id.c_str(),"TGraph");
+                  e->graphmap[id]=g;
+                  e->objects[id]=g;
+            }else if(f=="TGraphErrors"){
+                  TGraphErrors* ge = (TGraphErrors*) file.GetObjectChecked(id.c_str(),"TGraphErrors");
+                  e->graph_errormap[id]=ge;
+                  e->objects[id]=ge;
+            }else if(f=="TNtuple"){
+                  TNtuple* n = (TNtuple*)file.GetObjectChecked(id.c_str(),"TNtuple");
+                  e->ntuples_map[id]=n;
+                  e->objects[id]= n;
+            }else if(f=="TCanvas"){
+                  TCanvas* c = (TCanvas*)file.GetObjectChecked(id.c_str(),"TCanvas");
+                  e->canvas_map[id]=c;
+                  e->objects[id]= c;
+            }
+            file.Close();
+            return e;
+      }
+      file.Close();
+      return NULL; //errore lettura
 }
