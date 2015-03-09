@@ -124,32 +124,38 @@ TCanvas* experiment::newCanvas(string id, string title){
 }
 
 //metodi per aggiungere dati
-void  experiment::addH1(string id, TH1F* h){
+void  experiment::addH1( TH1F* h){
+      string id = h->GetName();
       objects[id]= h;
       h1map[id]=h;
 }
 
-void  experiment::addH2(string id, TH2F* h){
+void  experiment::addH2(TH2F* h){
+      string id = h->GetName();
       objects[id]= h;
       h2map[id]=h;
 }
 
-void  experiment::addGraph(string id, TGraph* g){
+void  experiment::addGraph(TGraph* g){
+      string id = g->GetName();
       objects[id]= g;
       graphmap[id]=g;
 }
 
-void  experiment::addGraphErrors(string id, TGraphErrors* g){
+void  experiment::addGraphErrors( TGraphErrors* g){
+      string id = g->GetName();
       objects[id]=g;
       graph_errormap[id]=g;
 }
 
-void experiment::addNtuple(string id, TNtuple* nt){
+void experiment::addNtuple( TNtuple* nt){
+      string id = nt->GetName();
       objects[id]= nt;
       ntuples_map[id]=nt;
 }
 
-void experiment::addCanvas(string id, TCanvas* c){
+void experiment::addCanvas( TCanvas* c){
+      string id = c->GetName();
       objects[id]= c;
       canvas_map[id]= c;
 }
@@ -269,7 +275,7 @@ string experiment::getObjDescr(string id){
 
 //salvataggio dati
 void experiment::saveData(){
-      TFile file ( (exp_name+".root").c_str(), "UPDATE");
+     TFile file ( (exp_name+".root").c_str(), "UPDATE");
       map<string, TObject*>::iterator it = objects.begin();
       while(it != objects.end()){
             it->second->Write();
@@ -318,6 +324,7 @@ experiment* experiment::loadExperiment(string name){
       //prima di tutto si legge il file di info
       ifstream in (name+".info", ios::in);
       TFile* file = new TFile((name+".root").c_str(), "READ" );
+      gFile = file;
       stringstream ss;
       if(in.good()){
             string line;

@@ -41,12 +41,12 @@ public:
       TCanvas* newCanvas(string id,string title);
 
       //aggiunta oggetti
-      void addH1(string id, TH1F* h);
-      void addH2(string id, TH2F* h);
-      void addGraph(string id, TGraph* g);
-      void addGraphErrors(string id, TGraphErrors* g);
-      void addNtuple(string id, TNtuple* nt);
-      void addCanvas(string id, TCanvas* c);
+      void addH1( TH1F* h);
+      void addH2( TH2F* h);
+      void addGraph( TGraph* g);
+      void addGraphErrors( TGraphErrors* g);
+      void addNtuple(TNtuple* nt);
+      void addCanvas( TCanvas* c);
       void addDescription(string id, string desc);
 
       //metodo get generico
