@@ -160,7 +160,7 @@ void experiment::addCanvas( TCanvas* c){
       canvas_map[id]= c;
 }
 
-void  experiment::addDescription(string id, string desc){
+void  experiment::addObjDescr(string id, string desc){
       descr[id]=desc;
 }
 
@@ -275,7 +275,7 @@ string experiment::getObjDescr(string id){
 
 //salvataggio dati
 void experiment::saveData(){
-     TFile file ( (exp_name+".root").c_str(), "UPDATE");
+     TFile file ( (exp_name+".root").c_str(), "RECREATE");
       map<string, TObject*>::iterator it = objects.begin();
       while(it != objects.end()){
             it->second->Write();
@@ -307,7 +307,7 @@ void experiment::saveData(){
       }
       map<string,TNtuple*>::iterator itn = ntuples_map.begin();
       while(itn != ntuples_map.end()){
-            out <<"Tntuple   "<<itn->first << "   " << descr[itn->first]<<endl;
+            out <<"TNtuple   "<<itn->first << "   " << descr[itn->first]<<endl;
             itn++;
       }
       map<string,TCanvas*>::iterator itc = canvas_map.begin();
@@ -324,42 +324,43 @@ experiment* experiment::loadExperiment(string name){
       //prima di tutto si legge il file di info
       ifstream in (name+".info", ios::in);
       TFile* file = new TFile((name+".root").c_str(), "READ" );
-      gFile = file;
       stringstream ss;
       if(in.good()){
             string line;
-            getline(in,line);
-            ss<<line;
-            //si legge la prima parola
-            string f,id,desc;
-            ss>>f >> id>>desc;
-            //aggiungo descrizione
-            e->descr[id]=desc;
+            while(getline(in,line)){
+                  ss<<line;
+                  //si legge la prima parola
+                  string f,id,desc;
+                  ss>>f >> id>>desc;
+                  ss.clear();
+                  //aggiungo descrizione
+                  e->descr[id]=desc;
 
-            if(f == "TH1F" ){
-                  TH1F* h1 = (TH1F*) file->GetObjectChecked(id.c_str(),"TH1F");
-                  e->h1map[id]=h1;
-                  e->objects[id]=h1;
-            }else if(f == "TH2F"){
-                  TH2F* h2 = (TH2F*) file->GetObjectChecked(id.c_str(),"TH2F");
-                  e->h2map[id]=h2;
-                  e->objects[id]=h2;
-            }else if (f == "TGraph"){
-                  TGraph* g = (TGraph*) file->GetObjectChecked(id.c_str(),"TGraph");
-                  e->graphmap[id]=g;
-                  e->objects[id]=g;
-            }else if(f=="TGraphErrors"){
-                  TGraphErrors* ge = (TGraphErrors*) file->GetObjectChecked(id.c_str(),"TGraphErrors");
-                  e->graph_errormap[id]=ge;
-                  e->objects[id]=ge;
-            }else if(f=="TNtuple"){
-                  TNtuple* n = (TNtuple*)file->GetObjectChecked(id.c_str(),"TNtuple");
-                  e->ntuples_map[id]=n;
-                  e->objects[id]= n;
-            }else if(f=="TCanvas"){
-                  TCanvas* c = (TCanvas*)file->GetObjectChecked(id.c_str(),"TCanvas");
-                  e->canvas_map[id]=c;
-                  e->objects[id]= c;
+                  if(f == "TH1F" ){
+                        TH1F* h1 = (TH1F*) file->GetObjectChecked(id.c_str(),"TH1F");
+                        e->h1map[id]=h1;
+                        e->objects[id]=h1;
+                  }else if(f == "TH2F"){
+                        TH2F* h2 = (TH2F*) file->GetObjectChecked(id.c_str(),"TH2F");
+                        e->h2map[id]=h2;
+                        e->objects[id]=h2;
+                  }else if (f == "TGraph"){
+                        TGraph* g = (TGraph*) file->GetObjectChecked(id.c_str(),"TGraph");
+                        e->graphmap[id]=g;
+                        e->objects[id]=g;
+                  }else if(f=="TGraphErrors"){
+                        TGraphErrors* ge = (TGraphErrors*) file->GetObjectChecked(id.c_str(),"TGraphErrors");
+                        e->graph_errormap[id]=ge;
+                        e->objects[id]=ge;
+                  }else if(f=="TNtuple"){
+                        TNtuple* n = (TNtuple*)file->GetObjectChecked(id.c_str(),"TNtuple");
+                        e->ntuples_map[id]=n;
+                        e->objects[id]= n;
+                  }else if(f=="TCanvas"){
+                        TCanvas* c = (TCanvas*)file->GetObjectChecked(id.c_str(),"TCanvas");
+                        e->canvas_map[id]=c;
+                        e->objects[id]= c;
+                  }
             }
             return e;
       }

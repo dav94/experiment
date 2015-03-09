@@ -47,7 +47,7 @@ public:
       void addGraphErrors( TGraphErrors* g);
       void addNtuple(TNtuple* nt);
       void addCanvas( TCanvas* c);
-      void addDescription(string id, string desc);
+      void addObjDescr(string id, string desc);
 
       //metodo get generico
       TObject* get(string id);
