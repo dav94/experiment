@@ -29,13 +29,14 @@ public:
       experiment& operator=(const experiment& e);
 
       //creazione oggetti
-      TH1F* newH1(string id, int nbins, double min, double max);
-      TH2F* newH2(string id, int nxbins, double minx, double maxx,
+      TH1F* newH1(string id, string title,int nbins, double min, double max);
+      TH2F* newH2(string id,string title, int nxbins, double minx, double maxx,
                                     int nybins, double miny, double maxy);
-      TGraph* newGraph(string id,int n, double* x, double* y);
-      TGraph* newGraph(string id,const char* file );
-      TGraphErrors* newGraphErrors(string id, int n, double* x, double* y,double* ex,double* ey);
-      TGraphErrors* newGraphErrors(string id,const char* file );
+      TGraph* newGraph(string id,string title,int n, double* x, double* y);
+      TGraph* newGraph(string id,string title,const char* file );
+      TGraphErrors* newGraphErrors(string id,string title, int n, double* x, double* y,
+                                    double* ex,double* ey);
+      TGraphErrors* newGraphErrors(string id,string title,const char* file );
       TNtuple* newNtuple(string id, int nvar );
       TCanvas* newCanvas(string id,string title);
 
@@ -60,7 +61,7 @@ public:
 
       //metodi informativi
       void listObjects();
-      string getObjectDescription(string id);
+      string getObjDescr(string id);
 
       //salvataggio e caricamento
       void saveData();
