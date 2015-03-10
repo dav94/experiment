@@ -40,6 +40,7 @@ experiment& experiment::operator= (const experiment& e){
       graph_errormap = e.graph_errormap;
       ntuples_map= e.ntuples_map;
       canvas_map= e.canvas_map;
+      return *this;
 }
 
 //metodi per creare nuovi dati
@@ -110,6 +111,8 @@ TNtuple* experiment::newNtuple(string id, int var){
             case 3:
                   n = new TNtuple(id.c_str(),id.c_str(),"x1:x2:x3");
                   break;
+            default:
+                  n = new TNtuple(id.c_str(),id.c_str(),"x1");
       }
       objects[id]= n;
       ntuples_map[id]=n;
