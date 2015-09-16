@@ -4,9 +4,11 @@
 #include <sstream>
 using namespace std;
 
-experiment::experiment(string name):  exp_name(name){}
+experiment::experiment(string name):  exp_name(name),file_open(false){}
 
 experiment::~experiment(){
+      //chiusura del TFile
+      file->Close();
       //bisogna svuotare tutte le mappe
       descr.clear();
       h1map.clear();
@@ -16,6 +18,8 @@ experiment::~experiment(){
       ntuples_map.clear();
       canvas_map.clear();
       objects.clear();
+      tf1_map.clear();
+      mgraph_map.clear();
 }
 
 experiment::experiment(const experiment& e){
@@ -28,6 +32,10 @@ experiment::experiment(const experiment& e){
       graph_errormap = e.graph_errormap;
       ntuples_map= e.ntuples_map;
       canvas_map= e.canvas_map;
+      tf1_map = e.tf1_map;
+      mgraph_map= e.mgraph_map;
+      file = e.file;
+      file_open= e.file_open;
 }
 
 experiment& experiment::operator= (const experiment& e){
@@ -40,7 +48,16 @@ experiment& experiment::operator= (const experiment& e){
       graph_errormap = e.graph_errormap;
       ntuples_map= e.ntuples_map;
       canvas_map= e.canvas_map;
+      tf1_map = e.tf1_map;
+      mgraph_map= e.mgraph_map;
+      file = e.file;
+      file_open = e.file_open;
       return *this;
+}
+
+void experiment::close(){
+      file_open= false;
+      file->Close();
 }
 
 //metodi per creare nuovi dati
@@ -139,16 +156,19 @@ void  experiment::addH2(TH2F* h){
       h2map[id]=h;
 }
 
-void  experiment::addGraph(TGraph* g){
-      string id = g->GetName();
+void  experiment::addGraph(string id, TGraph* g){
       objects[id]= g;
       graphmap[id]=g;
 }
 
-void  experiment::addGraphErrors( TGraphErrors* g){
-      string id = g->GetName();
+void  experiment::addGraphErrors(string id, TGraphErrors* g){
       objects[id]=g;
       graph_errormap[id]=g;
+}
+
+void experiment::addMultiGraph(string id, TMultiGraph* m){
+      objects[id]=m;
+      mgraph_map[id]= m;
 }
 
 void experiment::addNtuple( TNtuple* nt){
@@ -161,6 +181,12 @@ void experiment::addCanvas( TCanvas* c){
       string id = c->GetName();
       objects[id]= c;
       canvas_map[id]= c;
+}
+
+void experiment::addTF1(TF1* f){
+      string id = f->GetName();
+      objects[id]=f;
+      tf1_map[id]=f;
 }
 
 void  experiment::addObjDescr(string id, string desc){
@@ -213,6 +239,15 @@ TGraphErrors* experiment::getGraphErrors(string id){
       }
 }
 
+TMultiGraph* experiment::getMultiGraph(string id){
+       map<string,TMultiGraph*>::iterator it = mgraph_map.find(id);
+      if(it != mgraph_map.end()){
+            return it->second;
+      }else{
+            return NULL;
+      }
+}
+
 TNtuple* experiment::getNtuple(string id){
       map<string,TNtuple*>::iterator it = ntuples_map.find(id);
       if(it != ntuples_map.end()){
@@ -225,6 +260,15 @@ TNtuple* experiment::getNtuple(string id){
 TCanvas* experiment::getCanvas(string id){
       map<string,TCanvas*>::iterator it = canvas_map.find(id);
       if(it!= canvas_map.end()){
+            return it->second;
+      }else{
+            return NULL;
+      }
+}
+
+TF1* experiment::getTF1(string id){
+       map<string,TF1*>::iterator it = tf1_map.find(id);
+      if(it!= tf1_map.end()){
             return it->second;
       }else{
             return NULL;
@@ -257,6 +301,12 @@ void experiment::listObjects(){
             cout <<"\t"<< it4->first << " : " <<descr[it4->first]<<endl;
             it4++;
       }
+        cout << "TMultiGraph:\n ";
+      map<string,TMultiGraph* >::iterator it8 = mgraph_map.begin();
+      while(it8 != mgraph_map.end()){
+            cout <<"\t"<< it8->first << " : " <<descr[it8->first]<<endl;
+            it8++;
+      }
       cout << "TNtuple:\n ";
       map<string,TNtuple* >::iterator it5 = ntuples_map.begin();
       while(it5 != ntuples_map.end()){
@@ -269,6 +319,12 @@ void experiment::listObjects(){
             cout <<"\t"<< it6->first << " : " <<descr[it6->first]<<endl;
             it6++;
       }
+      cout << "TF1:\n";
+      map<string,TF1* >::iterator it7 = tf1_map.begin();
+      while(it7 != tf1_map.end()){
+            cout <<"\t"<< it7->first << " : " <<descr[it7->first]<<endl;
+            it7++;
+      }
 }
 
 string experiment::getObjDescr(string id){
@@ -278,7 +334,10 @@ string experiment::getObjDescr(string id){
 
 //salvataggio dati
 void experiment::saveData(){
-     TFile file ( (exp_name+".root").c_str(), "RECREATE");
+      if(!file_open){
+           this->file = new TFile( (exp_name+".root").c_str(), "RECREATE");
+           file_open= true;
+     }
       map<string, TObject*>::iterator it = objects.begin();
       while(it != objects.end()){
             it->second->Write();
@@ -308,6 +367,11 @@ void experiment::saveData(){
             out <<"TGraphErrors   "<< itge->first << "   " << descr[itge->first]<<endl;
             itge++;
       }
+       map<string,TMultiGraph*>::iterator itm = mgraph_map.begin();
+      while(itm != mgraph_map.end()){
+            out <<"TMultiGraph   "<< itm->first << "   " << descr[itm->first]<<endl;
+            itm++;
+      }
       map<string,TNtuple*>::iterator itn = ntuples_map.begin();
       while(itn != ntuples_map.end()){
             out <<"TNtuple   "<<itn->first << "   " << descr[itn->first]<<endl;
@@ -318,6 +382,11 @@ void experiment::saveData(){
             out <<"TCanvas   "<<itc->first << "   " << descr[itc->first]<<endl;
             itc++;
       }
+      map<string,TF1*>::iterator itf = tf1_map.begin();
+      while(itf != tf1_map.end()){
+            out <<"TF1   "<<itf->first << "   " << descr[itf->first]<<endl;
+            itf++;
+      }
       out.close();
 }
 
@@ -326,7 +395,9 @@ experiment* experiment::loadExperiment(string name){
       experiment* e = new experiment(name);
       //prima di tutto si legge il file di info
       ifstream in (name+".info", ios::in);
-      TFile* file = new TFile((name+".root").c_str(), "READ" );
+      TFile* file = new TFile((name+".root").c_str(), "UPDATE" );
+      e->file_open = true;
+      e->file = file;
       stringstream ss;
       if(in.good()){
             string line;
@@ -352,9 +423,15 @@ experiment* experiment::loadExperiment(string name){
                         e->graphmap[id]=g;
                         e->objects[id]=g;
                   }else if(f=="TGraphErrors"){
-                        TGraphErrors* ge = (TGraphErrors*) file->GetObjectChecked(id.c_str(),"TGraphErrors");
+                        TGraphErrors* ge = (TGraphErrors*) file->GetObjectChecked(
+                         id.c_str(),"TGraphErrors");
                         e->graph_errormap[id]=ge;
                         e->objects[id]=ge;
+                   }else if(f=="TGraphErrors"){
+                        TMultiGraph* m = (TMultiGraph*) file->GetObjectChecked(
+                         id.c_str(),"TMultiGraph");
+                        e->mgraph_map[id]=m;
+                        e->objects[id]=m;
                   }else if(f=="TNtuple"){
                         TNtuple* n = (TNtuple*)file->GetObjectChecked(id.c_str(),"TNtuple");
                         e->ntuples_map[id]=n;
@@ -363,9 +440,115 @@ experiment* experiment::loadExperiment(string name){
                         TCanvas* c = (TCanvas*)file->GetObjectChecked(id.c_str(),"TCanvas");
                         e->canvas_map[id]=c;
                         e->objects[id]= c;
+                  }else if(f=="TF1"){
+                        TF1* c = (TF1*)file->GetObjectChecked(id.c_str(),"TF1");
+                        e->tf1_map[id]=c;
+                        e->objects[id]= c;
                   }
             }
             return e;
       }
       return NULL; //errore lettura
+}
+
+void experiment::loadNtuple(TNtuple* nt,string path, int arg){
+      ifstream f ;
+      f.open(path);
+      stringstream ss;
+      string line;
+      //si salta la prima riga che contiene le info sulle colonne
+      getline(f,line);
+      while(getline(f,line)){
+            ss<< line;
+            if(line[0]=='#'){
+                  //si saltano le righe commentate
+                  ss.clear();
+                  continue;
+            }
+            float d[arg];
+            for(int i = 0; i< arg;i++){
+                  float a;
+                  ss>>a;
+                  d[i]=a;
+            }
+            ss.clear();
+            //si inserisce la riga nell'ntupla
+            nt->Fill(&d[0]);
+      }
+      f.close();
+}
+
+void experiment::loadNtuple(TNtuple* nt,string path, int arg,int salto){
+      ifstream f ;
+      f.open(path);
+      stringstream ss;
+      string line;
+      //si salta la prima riga che contiene le info sulle colonne
+      getline(f,line);
+      int i = 0;
+      while(getline(f,line)){
+            if((i % salto) != 0){
+                  i++;
+                  continue;
+            }
+            i++;
+            ss<< line;
+            if(line[0]=='#'){
+                  //si saltano le righe commentate
+                  ss.clear();
+                  continue;
+            }
+            float d[arg];
+            for(int i = 0; i< arg;i++){
+                  float a;
+                  ss>>a;
+                  d[i]=a;
+            }
+            ss.clear();
+            //si inserisce la riga nell'ntupla
+            nt->Fill(&d[0]);
+      }
+      f.close();
+}
+
+double* experiment::arrayN(double x, int n){
+      double* d = new double[n];
+      for (int i = 0; i < n; ++i)
+      {
+            d[i]=x;
+      }
+      return d;
+}
+
+TPaveStats* experiment::moveDownStats(TCanvas* c, TObject* t){
+      c->Update();
+      TPaveStats* stat1 = (TPaveStats*) t->FindObject("stats");
+      float height=  stat1->GetY2NDC() - stat1->GetY1NDC();
+      stat1->SetY1NDC(0.2);
+      stat1->SetY2NDC(0.2+ height);
+      stat1->Draw();
+      return stat1;
+}
+
+TPaveStats* experiment::moveLeftStats(TCanvas* c, TObject* t){
+      c->Update();
+      TPaveStats* stat1 = (TPaveStats*) t->FindObject("stats");
+      float width=  stat1->GetX2NDC() - stat1->GetX1NDC();
+      stat1->SetX1NDC(0.15);
+      stat1->SetX2NDC(0.15+ width);
+      stat1->Draw();
+      return stat1;
+}
+
+TPaveStats* experiment::moveStats(TCanvas* c , TObject* t,float x1,float y1){
+      c->Update();
+      TPaveStats* stat1 = (TPaveStats*) t->FindObject("stats");
+      float width=  stat1->GetX2NDC() - stat1->GetX1NDC();
+      stat1->SetX1NDC(x1);
+      stat1->SetX2NDC(x1+ width);
+      float height=  stat1->GetY2NDC() - stat1->GetY1NDC();
+      stat1->SetY1NDC(y1);
+      stat1->SetY2NDC(y1+ height);
+      stat1->Draw();
+      return stat1;
 }
