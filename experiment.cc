@@ -511,6 +511,43 @@ void experiment::loadNtuple(TNtuple* nt,string path, int arg,int salto){
       f.close();
 }
 
+void experiment::loadNtuple(TNtuple* nt,string path, int arg,int salto,int after){
+      ifstream f ;
+      f.open(path);
+      stringstream ss;
+      string line;
+      //si salta la prima riga che contiene le info sulle colonne
+      getline(f,line);
+      int i = 0;
+      int s = 0;
+      while(getline(f,line)){
+            if(s>after){
+                  if((i % salto) != 0){
+                        i++;
+                        continue;
+                  }
+                  i++;
+            }
+            s++;
+            ss<< line;
+            if(line[0]=='#'){
+                  //si saltano le righe commentate
+                  ss.clear();
+                  continue;
+            }
+            float d[arg];
+            for(int i = 0; i< arg;i++){
+                  float a;
+                  ss>>a;
+                  d[i]=a;
+            }
+            ss.clear();
+            //si inserisce la riga nell'ntupla
+            nt->Fill(&d[0]);
+      }
+      f.close();
+}
+
 double* experiment::arrayN(double x, int n){
       double* d = new double[n];
       for (int i = 0; i < n; ++i)

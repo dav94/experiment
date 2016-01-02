@@ -82,6 +82,7 @@ public:
       //metodo helper per la lettura delle ntuple
       static void loadNtuple(TNtuple* nt,string path, int arg);
       static void loadNtuple(TNtuple* nt,string path, int arg,int salto);
+      static void loadNtuple(TNtuple* nt,string path, int arg,int salto, int after);
       //metodo helper che crea array di double con il valore scelto
       static double* arrayN(double x, int n);
       //metodi per spostare le statistiche
